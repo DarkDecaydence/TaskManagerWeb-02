@@ -15,6 +15,8 @@ public class Task implements Serializable {
     public String date;
     @XmlAttribute(name = "status")
     public String status;
+    @XmlAttribute(name = "required")
+    public boolean required;
     
     public String description;
     public String attendantId;
@@ -44,7 +46,7 @@ public class Task implements Serializable {
     public String print(){
         String task = "";
         task +="Id: "+id +", Name: " + name + ", Date: "+ date +", Status: " + status +
-                ", Description: " + description + ", Attendant: " + attendantId;        
+                ", Required: " + required + ", Description: " + description + ", Attendant: " + attendantId;        
         return task;
     }
 }
