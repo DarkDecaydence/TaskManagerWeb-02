@@ -127,4 +127,11 @@ public class Cal {
             System.out.println("Error - Could not write to XML: " + e);
         }
     }
+    
+    /**
+     * Deletes all current task
+     */
+    public void deleteAllTask(){
+        tasks = new ArrayList<Task>();
+    }
 }

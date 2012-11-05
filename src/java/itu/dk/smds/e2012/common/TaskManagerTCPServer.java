@@ -33,6 +33,7 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
      * @param args the command line arguments
      */
     public void start(String[] args) throws Exception {
+                
                 channel = new JChannel();
                 channel.setReceiver(this);
                 //System.out.println("Channel (Name): " + channel.getName());
@@ -42,27 +43,25 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
                 channel.close();
     }
         
-    private void eventLoop(){
-            
-            BufferedReader in=new BufferedReader(new InputStreamReader(System.in));
+    private void eventLoop(){    
+        BufferedReader in=new BufferedReader(new InputStreamReader(System.in));
 
-            while(true) {
-                try {
-                System.out.print("> "); System.out.flush();
-                String line=in.readLine().toLowerCase();
-                if(line.startsWith("end") || line.startsWith("close"))
+        while(true) {
+            try {
+            System.out.print("> "); System.out.flush();
+            String line=in.readLine().toLowerCase();
+                if(line.startsWith("end") || line.startsWith("close")) {
                     break;
-                
-                line="[" + "Server" + "] " + line;
-
-                Message msg=new Message(null, null, line);
-
-                channel.send(msg);
-
-                } catch(Exception e) {
                 }
 
+            Message msg=new Message(null, null, line);
+
+            channel.send(msg);
+
+            } catch(Exception e) {
             }
+
+        }
     }
         
     @Override
@@ -75,8 +74,17 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
         Object[] receiver;
         
         try{
+            try{
+                String rec = (String) msg.getObject();
+                //System.out.println("REC "+ rec);
+                if("deleteall".equals(rec)){
+                    deleteAll(msg);
+                }
+            } catch(Exception e) {
+            }
             receiver = (Object[]) msg.getObject();
-            System.out.println("Idetifier: " + receiver[0] + ", XML: " + receiver[1]);
+            // Debugging line
+            //System.out.println("Idetifier: " + receiver[0] + ", XML: " + receiver[1].toString());
         
         if("POST".equals(receiver[0].toString())){
                     post(msg);
@@ -86,19 +94,13 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
                     get(msg);
                 } else if("DELETE".equals(receiver[0])){
                     delete(msg);
-                } else if("GetAttendantTasks".equals(receiver[0])){
-                    //attendantTasks();
-                } else if("CreateTask".equals(receiver[0])){
-                    //createTaskSoapRest();
-                } else if("DeleteTask".equals(receiver[0])){
-                    //deleteTaskSoapRest();
-                }
+                } 
         } catch (Exception e){
             System.out.println("Error while parsing command");
             // Send message back to client using "send"
         }
     }    
-    
+
     private static void post(Message msg){
 
         // Internal logic for creating a task
@@ -138,6 +140,15 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
             Object[] arg = (Object[]) msg.getObject();
             String str = (String) arg[1];
             cal.DELETE(str);
+        } catch (ClassCastException e){
+            System.out.println("Couldn't delete task");
+        }
+    }
+    
+    private static void deleteAll(Message msg){
+        try{
+            System.out.println(msg.getScope());
+            cal.deleteAllTask();
         } catch (ClassCastException e){
             System.out.println("Couldn't delete task");
         }
