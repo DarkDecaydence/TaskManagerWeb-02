@@ -10,9 +10,6 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.xml.bind.annotation.XmlAttribute;
 import org.jgroups.*;
 
 /**
