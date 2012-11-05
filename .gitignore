@@ -1,0 +1,11 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+/nbproject/
+/nbproject/private/
+/build/
+/build/web/
