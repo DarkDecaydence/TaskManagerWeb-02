@@ -38,7 +38,7 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
                 channel.setReceiver(this);
                 //System.out.println("Channel (Name): " + channel.getName());
                 //System.out.println("Channel (Address):" + channel.getAddressAsString());                   
-                channel.connect("TaskGroup");
+                channel.connect("ServerCluster1");
                 eventLoop();
                 channel.close();
     }
@@ -71,87 +71,113 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     
     @Override
     public void receive(Message msg){
-        Object[] receiver;
-        
         try{
             try{
                 String rec = (String) msg.getObject();
-                //System.out.println("REC "+ rec);
+                System.out.println("REC "+ rec);
                 if("deleteall".equals(rec)){
                     deleteAll(msg);
                 }
             } catch(Exception e) {
+                //Do nothing, internal command for reseting task list
             }
-            receiver = (Object[]) msg.getObject();
-            // Debugging line
-            //System.out.println("Idetifier: " + receiver[0] + ", XML: " + receiver[1].toString());
-        
-        if("POST".equals(receiver[0].toString())){
-                    post(msg);
-                } else if("PUT".equals(receiver[0])){
-                    put(msg);
-                } else if("GET".equals(receiver[0])){
-                    get(msg);
-                } else if("DELETE".equals(receiver[0])){
-                    delete(msg);
-                } 
+            Operation operation = new Operation(msg);
+            Thread operationThread = new Thread(operation);
+            operationThread.start();
         } catch (Exception e){
             System.out.println("Error while parsing command");
             // Send message back to client using "send"
         }
     }    
+    
+    private class Operation implements Runnable {
+        
+        Message msg;
+        String type;
+        
+        public Operation(Message msg) {
+            this.msg = msg;
+            
+            try{
+                Object[] receiver = (Object[]) msg.getObject();
+                type = receiver[0].toString();
+            } catch (Exception e){
+                type="NULL";
+            }
+        }
+        
+        public void run() {
+            if (type.equals("POST")) {
+                post(msg);
+            } else if (type.equals("PUT")) {
+                put(msg);
+            } else if (type.equals("GET")) {
+                get(msg);
+            } else if (type.equals("DELETE")) {
+                delete(msg);
+            } else if(type.equals("NULL")){
+                //Do nothing, not a request
+            }
+        }
+        
+        private void post(Message msg){
 
-    private static void post(Message msg){
+            // Internal logic for creating a task
+            try {
+                Object[] arg = (Object[]) msg.getObject();
+                Task task = (Task) arg[1];
+                synchronized(task) {
+                    cal.POST(task);
+                }
+            } catch (ClassCastException ex) {
+                Logger.getLogger(TaskManagerTCPServer.class.getName()).log(Level.SEVERE, null, ex);
+                System.out.println("Task creation failed");
+            }
+        }
 
-        // Internal logic for creating a task
-        try {
-            Object[] arg = (Object[]) msg.getObject();
-            Task task = (Task) arg[1];
-            cal.POST(task);
-        } catch (ClassCastException ex) {
-            Logger.getLogger(TaskManagerTCPServer.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("Task creation failed");
+        private void put(Message msg){
+            // Internal logic for creating a task
+            try {
+                Object[] arg = (Object[]) msg.getObject();
+                Task task = (Task) arg[1];
+                synchronized(task) {
+                    cal.PUT(task);
+                }
+            } catch (ClassCastException ex) {
+                Logger.getLogger(TaskManagerTCPServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
+        private void get(Message msg){
+            List<Task> list = cal.GET();
+            Object[] arg = new Object[]{"SENT",list};
+            try{
+                channel.send(new Message(null, null, arg));
+            } catch (Exception e){
+                System.out.println("Unable to send task list");
+            }
+        }
+
+        private void delete(Message msg){
+            try{
+                Object[] arg = (Object[]) msg.getObject();
+                String str = (String) arg[1];
+                synchronized(str) {
+                    cal.DELETE(str);
+                }
+            } catch (ClassCastException e){
+                System.out.println("Couldn't delete task");
+            }
         }
     }
     
-    private static void put(Message msg){
-        // Internal logic for creating a task
-        try {
-            Object[] arg = (Object[]) msg.getObject();
-            Task task = (Task) arg[1];
-            cal.PUT(task);
-        } catch (ClassCastException ex) {
-            Logger.getLogger(TaskManagerTCPServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    private static void get(Message msg){
-        List<Task> list = cal.GET();
-        Object[] arg = new Object[]{"SENT",list};
-        try{
-            channel.send(new Message(null, null, arg));
-        } catch (Exception e){
-            System.out.println("Unable to send task list");
-        }
-    }
-    
-    private static void delete(Message msg){
-        try{
-            Object[] arg = (Object[]) msg.getObject();
-            String str = (String) arg[1];
-            cal.DELETE(str);
-        } catch (ClassCastException e){
-            System.out.println("Couldn't delete task");
-        }
-    }
-    
-    private static void deleteAll(Message msg){
-        try{
-            System.out.println(msg.getScope());
-            cal.deleteAllTask();
-        } catch (ClassCastException e){
-            System.out.println("Couldn't delete task");
-        }
+    private void deleteAll(Message msg){
+            try{
+                System.out.println(msg.getScope());
+                cal.deleteAllTask();
+            } catch (ClassCastException e){
+                System.out.println("Couldn't delete task");
+            }
     }
     
     /**
