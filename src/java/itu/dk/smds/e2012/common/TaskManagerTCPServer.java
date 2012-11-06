@@ -140,9 +140,7 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
             try {
                 Object[] arg = (Object[]) msg.getObject();
                 Task task = (Task) arg[1];
-                synchronized(task) {
-                    cal.PUT(task);
-                }
+                cal.PUT(task);
             } catch (ClassCastException ex) {
                 Logger.getLogger(TaskManagerTCPServer.class.getName()).log(Level.SEVERE, null, ex);
             }

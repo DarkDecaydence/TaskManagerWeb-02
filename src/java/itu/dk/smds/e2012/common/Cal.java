@@ -82,9 +82,11 @@ public class Cal {
         {
             if(tasks.get(i).id == t.id)
             {
-                tasks.remove(i);
-                tasks.add(t);
-                break;
+                synchronized(tasks.get(i)) {
+                    tasks.remove(i);
+                    tasks.add(t);
+                    break;
+                }
             }
         }
         writeToXml();
