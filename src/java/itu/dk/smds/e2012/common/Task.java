@@ -49,4 +49,25 @@ public class Task implements Serializable {
                 ", Required: " + required + ", Description: " + description + ", Attendant: " + attendantId;        
         return task;
     }
+    
+    @Override
+    public boolean equals(Object obj){
+        try {
+            Task task = (Task) obj;
+            if (    (this.id.equals(task.id)) && 
+                    (this.name.equals(task.name)) &&
+                    (this.date.equals(task.date)) &&
+                    (this.status.equals(task.status)) &&
+                    (this.required == task.required) &&
+                    (this.description.equals(task.description)) &&
+                    (this.attendantId.equals(task.attendantId)))
+            {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (ClassCastException e) {
+            return false;
+        }
+    }
 }

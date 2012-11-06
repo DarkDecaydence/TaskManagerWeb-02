@@ -1,13 +1,8 @@
 package itu.dk.smds.e2012.common;
 import java.util.ArrayList;
-import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import java.io.*;
 /**
  * The class responsible for the task manager data
  */
@@ -87,9 +82,11 @@ public class Cal {
         {
             if(tasks.get(i).id == t.id)
             {
-                tasks.remove(i);
-                tasks.add(t);
-                break;
+                synchronized(tasks.get(i)) {
+                    tasks.remove(i);
+                    tasks.add(t);
+                    break;
+                }
             }
         }
         writeToXml();
@@ -99,7 +96,7 @@ public class Cal {
      * Deletes the specific task.
      * @param t, the task to be deleted.
      */
-    public void DELETE(Task t){
+    public void DELETE(Task t) {
         tasks.remove(t);
         writeToXml();
     }

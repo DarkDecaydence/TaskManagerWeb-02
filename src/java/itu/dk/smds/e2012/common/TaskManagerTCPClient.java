@@ -1,14 +1,7 @@
 package itu.dk.smds.e2012.common;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.util.List;
 import org.jgroups.*;
 
@@ -26,55 +19,12 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         try {
             channel=new JChannel();
             channel.setReceiver(this);
-            channel.connect("TaskGroup");
+            channel.connect("ServerCluster1");
             eventLoop();
             channel.close();
         } catch (Exception e){
             
         }
-        /*
-        //new string array containing all the users of the system
-        String[][] u = new String[][]{{"Alexander Kirk","goblin123"},
-            {"Mikkel Stolborg","demon123"},{"Niklas Madsen","orc123"},{"Morten Dresdner","devil123"}};
-
-        //Using post, create a task:
-        Task taskDelete = new Task("0002" , "Clean up code","26-09-2012",
-                "initialized","Code needs to shine", "Mikkel; Alex; Niklas; Morten");
-        taskRequest(socket, taskDelete, "POST");
-
-        //Change task by sending put request
-        Task taskput = new Task("0001", "Do MDS Mandatory Exercise 1","18-09-2012",
-                "done","Task Manager simple setup", "Mikkel");
-        taskRequest(socket, taskput,"PUT");
-
-        //Get task list by id
-        String id = "0001";
-        getRequest(socket, id);
-
-        //Delete a task by id
-        String taskId = "0002";
-        deleteRequest(socket, taskId);
-
-        String attendantId = "Mikkel";
-        getAttendantTasks(socket, attendantId, "3");
-
-        Task newTask = new Task("0003", "Mess with your dog", "30-10-2012",
-                "initialized","It is getting restless", "Mikkel; Alex; Niklas; Morten");
-        createTask(socket, newTask, "3");
-
-        deleteTask(socket, "0003", "3");
-
-        //Print file
-        //PrintTaskServerRequest(socket);
-        dos.writeUTF("close");
-        dos.flush();
-        socket.close();
-        channel.close();
-        } catch (Exception e) {
-            Logger.getLogger(TaskManagerTCPClient.class.getName()).log(Level.SEVERE, null, e);
-            System.out.println("error message: " + e.getMessage());
-        }
-        */
     }
     
     private void eventLoop(){
@@ -82,6 +32,13 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         
         //Create task
         try{
+            Message msg = new Message(null, null, new Object[]{"GET","0001"});
+            channel.send(msg);
+        } catch (Exception e){
+            System.out.println("Error occured whilst parsing object");
+        }
+        try{               
+            
             Message msg = new Message(null, null, new Object[]{"POST",new Task("0001" , "Do MDS Mandatory Exercise 1","18-09-2012",
                     "initialized","Task Manager simple setup", "Mikkel; Alex; Niklas; Morten")});
             channel.send(msg);
@@ -127,6 +84,23 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             Message msg = new Message(null, null, new Object[]{"GET","0001"});
             channel.send(msg);
         } catch (Exception e){
+            System.out.println("Error occured whilst parsing object");
+        }
+        
+        try {
+            Message msg = new Message(null, null, new Object[]{"POST", 
+                new Task("0022", "Eat your vegetables","18-09-2012",
+                    "done","Task Manager simple setup", "Mikkel")});
+            channel.send(msg);
+            
+            msg = new Message(null, null, new Object[]{"PUT", 
+                new Task("0022", "Eat more rice","18-09-2012",
+                    "done","Task Manager simple setup", "Mikkel")});
+            channel.send(msg);
+            
+            msg = new Message(null, null, new Object[]{"DELETE","0022"});
+            channel.send(msg);
+        } catch (Exception e) {
             System.out.println("Error occured whilst parsing object");
         }
         
