@@ -21,8 +21,8 @@ public class Task implements Serializable {
     
     public String description;
     public String attendantId;
-    public ArrayList<String> conditions;
-    public ArrayList<String> responses;
+    public String conditions;
+    public String responses;
     
     /**
      * Constructor for serialization purpose
@@ -39,15 +39,16 @@ public class Task implements Serializable {
      * @param attendant, the attendants of the task 
      */
     public Task(String id, String name, String date, String status,
-            String description, String attendant){
+            String description, String attendant, boolean required){
         this.id = id;
         this.name = name;
         this.date = date;
         this.status = status;
         this.description = description;
         this.attendantId = attendant;
-        this.conditions = new ArrayList<String>();
-        this.responses = new ArrayList<String>();
+        this.required = required;
+        this.conditions = "";
+        this.responses = "";
     }
     
     public String print(){
@@ -68,6 +69,22 @@ public class Task implements Serializable {
             }
         } else {
             return false;
+        }
+    }
+    
+    public void addCondition(String condition) {
+        if (this.conditions.equals("")) {
+            this.conditions += condition;
+        } else {
+            this.conditions += ", " + condition;
+        }
+    }
+    
+    public void addResponse(String response) {
+        if (this.responses.equals("")) {
+            this.responses += response;
+        } else {
+            this.responses += ", " + response;
         }
     }
 }
