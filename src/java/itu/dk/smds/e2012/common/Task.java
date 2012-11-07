@@ -2,6 +2,7 @@ package itu.dk.smds.e2012.common;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.ArrayList;
 /**
  * Class responsible for tasks
  */
@@ -20,10 +21,14 @@ public class Task implements Serializable {
     
     public String description;
     public String attendantId;
+    public ArrayList<String> conditions;
+    public ArrayList<String> responses;
+    
     /**
      * Constructor for serialization purpose
      */
     public Task(){}
+    
     /**
      * Constructor for creating a task
      * @param id, id of the task
@@ -41,6 +46,8 @@ public class Task implements Serializable {
         this.status = status;
         this.description = description;
         this.attendantId = attendant;
+        this.conditions = new ArrayList<String>();
+        this.responses = new ArrayList<String>();
     }
     
     public String print(){
@@ -52,21 +59,14 @@ public class Task implements Serializable {
     
     @Override
     public boolean equals(Object obj){
-        try {
+        if (obj instanceof Task) {
             Task task = (Task) obj;
-            if (    (this.id.equals(task.id)) && 
-                    (this.name.equals(task.name)) &&
-                    (this.date.equals(task.date)) &&
-                    (this.status.equals(task.status)) &&
-                    (this.required == task.required) &&
-                    (this.description.equals(task.description)) &&
-                    (this.attendantId.equals(task.attendantId)))
-            {
+            if ((this.id.equals(task.id)) && (this.name.equals(task.name))) {
                 return true;
             } else {
                 return false;
             }
-        } catch (ClassCastException e) {
+        } else {
             return false;
         }
     }
