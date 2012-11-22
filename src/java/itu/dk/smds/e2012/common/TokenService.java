@@ -84,8 +84,7 @@ public class TokenService extends ReceiverAdapter {
             session.connect(30000);   // making a connection with timeout.
             
             Date date = new Date();
-            DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            String timestamp = df.format(date);
+            String timestamp = date.toString();
             String unsafeToken = user + host + ", " + timestamp;
             token = tokenServiceServerEncrypter.encryptClearText(unsafeToken);
         } catch(Exception e) {
