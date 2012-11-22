@@ -1,15 +1,9 @@
 package itu.dk.smds.e2012.common;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,6 +19,8 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     private static DataInputStream dis;
     */
     private static Cal cal = CalSerializer.getCal();
+    private Encrypter serverTokenServiceEncrypter;
+    private ArrayList<Encrypter> clientServerEncrypter = new ArrayList<Encrypter>();
     
     private static JChannel channel;
     
@@ -33,14 +29,12 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
      * @param args the command line arguments
      */
     public void start(String[] args) throws Exception {
-                
-                channel = new JChannel();
-                channel.setReceiver(this);
-                //System.out.println("Channel (Name): " + channel.getName());
-                //System.out.println("Channel (Address):" + channel.getAddressAsString());                   
-                channel.connect("ServerCluster1");
-                eventLoop();
-                channel.close();
+        channel = new JChannel();
+        channel.setReceiver(this);                   
+        channel.connect("ServerCluster1");
+        serverTokenServiceEncrypter = new Encrypter();
+        eventLoop();
+        channel.close();
     }
         
     private void eventLoop(){    
@@ -199,7 +193,6 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
             System.out.println("No file printed");
         }
     }
-    
     
     public static void main(String[] args) throws Exception{
         new TaskManagerTCPServer().start(args);
