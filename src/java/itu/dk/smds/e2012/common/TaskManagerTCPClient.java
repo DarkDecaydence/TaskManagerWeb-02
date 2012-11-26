@@ -11,13 +11,15 @@ import org.jgroups.*;
 public class TaskManagerTCPClient extends ReceiverAdapter {
 
     private JChannel channel;
+    private Encrypter clientTokenServiceEncrypter;
+    
     /**
      * The method for starting the client
      * @param args the command line arguments
      */
     private void start() {
         try {
-            channel=new JChannel();
+            channel = new JChannel();
             channel.setReceiver(this);
             channel.connect("ServerCluster1");
             eventLoop();
@@ -28,7 +30,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     }
     
     private void eventLoop(){
-        BufferedReader in=new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         
         //Create task
         try{
@@ -37,6 +39,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         } catch (Exception e){
             System.out.println("Error occured whilst parsing object");
         }
+        
         try{               
             
             Message msg = new Message(null, null, new Object[]{"POST",new Task("0001" , "Do MDS Mandatory Exercise 1","18-09-2012",
@@ -109,7 +112,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             try {
                 System.out.print("> "); System.out.flush();
 
-                String line=in.readLine().toLowerCase();
+                String line = in.readLine().toLowerCase();
 
                 if(line.startsWith("end") || line.startsWith("close"))
                     break;
@@ -121,20 +124,14 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
                     msg = new Message(null,null,new String[]{"Hej","ObjectJob"});
                     count++;
                 } else {
-
-                msg=new Message(null, null, line);
+                    msg=new Message(null, null, line);
                 }
                 
                 channel.send(msg);
 
-            }catch(Exception e) {
+            } catch(Exception e) {
             }            
         }
-    }
-    
-    
-    public static void main(String[] args){
-        new TaskManagerTCPClient().start();
     }
     
     @Override
@@ -143,7 +140,6 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         System.out.println("** view: " + new_view);
 
     }
-
 
     @Override
     public void receive(Message msg) {
@@ -156,5 +152,9 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             }
         }
 
+    }
+    
+    public static void main(String[] args){
+        new TaskManagerTCPClient().start();
     }
 }
