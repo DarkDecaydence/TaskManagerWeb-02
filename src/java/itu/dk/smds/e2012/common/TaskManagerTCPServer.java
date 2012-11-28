@@ -18,6 +18,8 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     private static DataInputStream dis;
     */
     private static Cal cal = CalSerializer.getCal();
+    private Encrypter serverTokenServiceEncrypter;
+    private ArrayList<Encrypter> clientServerEncrypter = new ArrayList<Encrypter>();
     
     private static JChannel channel;
     
@@ -26,14 +28,12 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
      * @param args the command line arguments
      */
     public void start(String[] args) throws Exception {
-                
-                channel = new JChannel();
-                channel.setReceiver(this);
-                //System.out.println("Channel (Name): " + channel.getName());
-                //System.out.println("Channel (Address):" + channel.getAddressAsString());                   
-                channel.connect("ServerCluster1");
-                eventLoop();
-                channel.close();
+        channel = new JChannel();
+        channel.setReceiver(this);                   
+        channel.connect("ServerCluster1");
+        serverTokenServiceEncrypter = new Encrypter();
+        eventLoop();
+        channel.close();
     }
         
     private void eventLoop(){    
@@ -192,7 +192,6 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
             System.out.println("No file printed");
         }
     }
-    
     
     public static void main(String[] args) throws Exception{
         new TaskManagerTCPServer().start(args);
