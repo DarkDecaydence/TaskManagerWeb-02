@@ -26,26 +26,6 @@ public class TokenService extends ReceiverAdapter {
         tokenServiceServerEncrypter = newEnc;
         return newEnc;
     }
-    
-    public static String authenticateToken(TaskManagerTCPClient tcpC) throws Exception {
-        String token = getNewToken();
-        if (token != null)
-        {
-            return token;
-        } else {
-            throw new Exception();
-        }
-    }
-    
-    public static String getNewToken() {
-        String host = JOptionPane.showInputDialog("Enter username@hostname",
-                        System.getProperty("user.name")
-                        + "@localhost");
-        
-        String passwd = JOptionPane.showInputDialog("Enter password:");
-        
-        return getNewToken(host, passwd);
-    }
 
     public static String getNewToken(String host, String passwd) {
         String token;
@@ -65,7 +45,8 @@ public class TokenService extends ReceiverAdapter {
             Date date = new Date();
             String timestamp = date.toString();
             String unsafeToken = user + host + ", " + timestamp;
-            token = tokenServiceServerEncrypter.encryptClearText(unsafeToken);
+            String serverCryptedToken = tokenServiceServerEncrypter.encryptClearText(unsafeToken);
+            token = tokenServiceClientEncrypters.get(user).encryptClearText(serverCryptedToken);
         } catch(Exception e) {
             // System.out.println(e);
             token = null;

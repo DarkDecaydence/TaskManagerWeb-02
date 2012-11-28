@@ -3,6 +3,7 @@ package itu.dk.smds.e2012.common;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import javax.swing.JOptionPane;
 import org.jgroups.*;
 import org.jgroups.stack.IpAddress;
 
@@ -14,6 +15,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     private JChannel channel;
     private Encrypter clientTokenServiceEncrypter;
     private String accessToken;
+    private String host;
     
     /**
      * The method for starting the client
@@ -24,13 +26,29 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             channel = new JChannel();
             channel.setReceiver(this);
             channel.connect("ServerCluster1");
-            accessToken = TokenService.getNewToken();
-            clientTokenServiceEncrypter = TokenService.getNewEncrypter(channel.getName(new IpAddress()));
+            
+            promptForHost();
+            clientTokenServiceEncrypter = TokenService.getNewEncrypter(host.substring(0, host.indexOf('@')));
+            String cryptedToken = getNewToken();
+            accessToken = clientTokenServiceEncrypter.decryptEncryption(cryptedToken);
+            
             eventLoop();
             channel.close();
         } catch (Exception e){
             
         }
+    }
+    
+    public void promptForHost() {
+        host = JOptionPane.showInputDialog("Enter username@hostname",
+                        System.getProperty("user.name")
+                        + "@localhost");
+    }
+    
+    public String getNewToken() {
+        String passwd = JOptionPane.showInputDialog("Enter password:");
+        
+        return TokenService.getNewToken(host, passwd);
     }
     
     public String getToken() 
