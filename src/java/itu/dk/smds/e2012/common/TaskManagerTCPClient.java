@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 import org.jgroups.*;
+import org.jgroups.stack.IpAddress;
 
 /**
  * The task manager client
@@ -12,6 +13,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
 
     private JChannel channel;
     private Encrypter clientTokenServiceEncrypter;
+    private String accessToken;
     
     /**
      * The method for starting the client
@@ -22,12 +24,17 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             channel = new JChannel();
             channel.setReceiver(this);
             channel.connect("ServerCluster1");
+            accessToken = TokenService.getNewToken();
+            clientTokenServiceEncrypter = TokenService.getNewEncrypter(channel.getName(new IpAddress()));
             eventLoop();
             channel.close();
         } catch (Exception e){
             
         }
     }
+    
+    public String getToken() 
+    { return accessToken; }
     
     private void eventLoop(){
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -158,9 +165,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     
     @Override
     public void viewAccepted(View new_view) {
-
         System.out.println("** view: " + new_view);
-
     }
 
     @Override

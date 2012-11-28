@@ -2,9 +2,6 @@ package itu.dk.smds.e2012.common;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import javax.swing.JOptionPane;
@@ -15,40 +12,22 @@ import org.jgroups.*;
  * @author Alexander
  */
 public class TokenService extends ReceiverAdapter {
-    private Encrypter tokenServiceServerEncrypter;
-    private HashMap<String,Encrypter> tokenServiceClientEncrypters;
-    private static JChannel channel;
+    private static Encrypter tokenServiceServerEncrypter;
+    private static HashMap<String,Encrypter> tokenServiceClientEncrypters;
     
-    public TokenService() {
-        try {
-            channel = new JChannel();
-            channel.setReceiver(this);
-            channel.connect("ServerCluster1");
-            eventLoop();
-            channel.close();
-        } catch (Exception e) {
-        }
-        
+    public static Encrypter getNewEncrypter(String username) {
+        Encrypter newEnc = Encrypter.getInstance();
+        tokenServiceClientEncrypters.put(username, newEnc);
+        return newEnc;
     }
     
-    private void eventLoop()
-    {
-        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
-        while (true) {
-            
-        }
+    public static Encrypter connectToServer() {
+        Encrypter newEnc = Encrypter.getInstance();
+        tokenServiceServerEncrypter = newEnc;
+        return newEnc;
     }
     
-    public void connectServerEncrypter(Encrypter encrypter) {
-        this.tokenServiceServerEncrypter = encrypter;
-    }
-    
-    public void connectClientEncrypter(String username, Encrypter encrypter) {
-        this.tokenServiceClientEncrypters.put(username, encrypter);
-    }
-    
-    public String authenticateToken(TaskManagerTCPClient tcpC) throws Exception {
+    public static String authenticateToken(TaskManagerTCPClient tcpC) throws Exception {
         String token = getNewToken();
         if (token != null)
         {
@@ -58,7 +37,7 @@ public class TokenService extends ReceiverAdapter {
         }
     }
     
-    public String getNewToken() {
+    public static String getNewToken() {
         String host = JOptionPane.showInputDialog("Enter username@hostname",
                         System.getProperty("user.name")
                         + "@localhost");
@@ -68,7 +47,7 @@ public class TokenService extends ReceiverAdapter {
         return getNewToken(host, passwd);
     }
 
-    public String getNewToken(String host, String password) {
+    public static String getNewToken(String host, String passwd) {
         String token;
         try {
             JSch jsch = new JSch();
@@ -79,7 +58,7 @@ public class TokenService extends ReceiverAdapter {
             
             Session session = jsch.getSession(user, host, 22);
             
-            session.setPassword(password);
+            session.setPassword(passwd);
             
             session.connect(30000);   // making a connection with timeout.
             
@@ -93,9 +72,5 @@ public class TokenService extends ReceiverAdapter {
         }
         
         return token;
-    }
-    
-    public static void main(String[] args) {
-        new TokenService();
     }
 }

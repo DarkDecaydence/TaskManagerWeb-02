@@ -3,6 +3,7 @@ package itu.dk.smds.e2012.common;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +20,6 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     */
     private static Cal cal = CalSerializer.getCal();
     private Encrypter serverTokenServiceEncrypter;
-    private ArrayList<Encrypter> clientServerEncrypter = new ArrayList<Encrypter>();
     
     private static JChannel channel;
     
@@ -31,7 +31,7 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
         channel = new JChannel();
         channel.setReceiver(this);                   
         channel.connect("ServerCluster1");
-        serverTokenServiceEncrypter = new Encrypter();
+        serverTokenServiceEncrypter = TokenService.connectToServer();
         eventLoop();
         channel.close();
     }
