@@ -21,7 +21,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         try {
             channel = new JChannel();
             channel.setReceiver(this);
-            channel.connect("ServerCluster1");
+            channel.connect("ServerCluster");
             eventLoop();
             channel.close();
         } catch (Exception e){

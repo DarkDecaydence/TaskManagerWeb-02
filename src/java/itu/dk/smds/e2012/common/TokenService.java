@@ -17,15 +17,17 @@ import org.jgroups.*;
 public class TokenService extends ReceiverAdapter {
     private Encrypter tokenServiceServerEncrypter;
     private HashMap<String,Encrypter> tokenServiceClientEncrypters;
-    private static JChannel channel;
+    private JChannel serverChannel;
+    private JChannel clientChannel;
     
     public TokenService() {
         try {
-            channel = new JChannel();
-            channel.setReceiver(this);
-            channel.connect("ServerCluster1");
+            
+            serverChannel = new JChannel();
+            serverChannel.setReceiver(this);
+            serverChannel.connect("TokenServer");
             eventLoop();
-            channel.close();
+            serverChannel.close();
         } catch (Exception e) {
         }
         
@@ -35,8 +37,29 @@ public class TokenService extends ReceiverAdapter {
     {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         
-        while (true) {
-            
+        while(true) {
+            try {
+                System.out.print("> "); System.out.flush();
+
+                String line = in.readLine().toLowerCase();
+
+                if(line.startsWith("end") || line.startsWith("close"))
+                    break;
+
+                int count = 0;
+                Message msg;
+                //line="[" + "Client" + "] " + line;
+                if(count < 1){
+                    msg = new Message(null,null,new String[]{"Hej","ObjectJob"});
+                    count++;
+                } else {
+                    msg=new Message(null, null, line);
+                }
+                
+                serverChannel.send(msg);
+
+            } catch(Exception e) {
+            }            
         }
     }
     

@@ -22,16 +22,21 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     private Encrypter serverTokenServiceEncrypter;
     private ArrayList<Encrypter> clientServerEncrypter = new ArrayList<Encrypter>();
     
-    private static JChannel channel;
+    private JChannel TokenChannel;
+    private JChannel channel;
     
     /**
      * Main method for initializing the server
      * @param args the command line arguments
      */
     public void start(String[] args) throws Exception {
+        TokenChannel = new JChannel();
+        TokenChannel.setReceiver(this);
+        TokenChannel.connect("TokenServer");
+        
         channel = new JChannel();
         channel.setReceiver(this);                   
-        channel.connect("ServerCluster1");
+        channel.connect("ServerCluster");
         serverTokenServiceEncrypter = new Encrypter();
         eventLoop();
         channel.close();
