@@ -1,9 +1,9 @@
 package itu.dk.smds.e2012.common;
 
-import java.io.*;
-import java.security.*;
-import javax.crypto.*;
 import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import java.io.UnsupportedEncodingException;
+import javax.crypto.*;
+import javax.crypto.spec.*;
 
 /**
  *
@@ -11,34 +11,44 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
  */
 public class Encrypter {
 
-    private static KeyGenerator keyGen;
-    private SecretKey desKey;
-    private Cipher desCipher;
+    private PBEParameterSpec pbeParameterSpec;
+    private PBEKeySpec pbeKeySpec;
+    private SecretKeyFactory keyFac;
+    private SecretKey pbeKey;
+    private Cipher pbeCipher;
     
-    public static Encrypter getInstance() {
-        return new Encrypter();
+    //Salt
+    byte[] salt = {
+        (byte) 0x21, (byte) 0xa2, (byte) 0xf4, (byte) 0x6b,
+        (byte) 0x87, (byte) 0xcd, (byte) 0x4e, (byte) 0x2c };
+    
+    //Iteration Count
+    int count = 33;
+    
+    public static Encrypter getInstance(String password) {
+        return new Encrypter(password);
     }
     
-    private Encrypter() {
+    private Encrypter(String password) {
         try {
-            keyGen = KeyGenerator.getInstance("DES");
-            desKey = keyGen.generateKey();
-            desCipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+            //PBE parameter set
+            pbeParameterSpec = new PBEParameterSpec(salt, count);
 
-            desCipher.init(Cipher.ENCRYPT_MODE, desKey);
-        } catch (NoSuchAlgorithmException nsae) {
-            System.out.println("No such algorithm: " + nsae.getMessage());
-        } catch (NoSuchPaddingException nspe) {
-            System.out.println("No such padding: " + nspe.getMessage());
-        } catch (InvalidKeyException ike) {
-            System.out.println("Invalid key: " + ike.getMessage());
+            pbeKeySpec = new PBEKeySpec(password.toCharArray());
+            keyFac = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+            pbeKey = keyFac.generateSecret(pbeKeySpec);
+            
+            pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+            
+            pbeCipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParameterSpec);
+        } catch (Exception e) {
+            System.out.println("You bloody broke it...");
         }
-        
     }
 
     public String encryptClearText(String input) throws IllegalBlockSizeException, BadPaddingException {
         byte[] clearText = input.getBytes();
-        byte[] cipherBytes = desCipher.doFinal(clearText);
+        byte[] cipherBytes = pbeCipher.doFinal(clearText);
         String cipherText = Base64.encode(cipherBytes);
         
         return cipherText;
@@ -46,7 +56,7 @@ public class Encrypter {
 
     public String decryptEncryption(String input) throws IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
         byte[] byteText = Base64.decode(input);
-        byte[] clearBytes = desCipher.doFinal(byteText);
+        byte[] clearBytes = pbeCipher.doFinal(byteText);
         String clearText = new String(clearBytes, "UTF-8");
 
         return clearText;

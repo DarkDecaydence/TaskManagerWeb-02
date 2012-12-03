@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.jgroups.*;
-import org.jgroups.stack.IpAddress;
 
 /**
  * The task manager client
@@ -16,7 +15,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     private JChannel tokenChannel;
     private Encrypter clientTokenServiceEncrypter;
     private String accessToken;
-    private String host;
+    //private String host;
     
     /**
      * The method for starting the client
@@ -27,13 +26,13 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             channel = new JChannel();
             channel.setReceiver(this);
             channel.connect("ServerCluster");
+            
             tokenChannel = new JChannel();
             tokenChannel.setReceiver(this);
             tokenChannel.connect("TokenCluster");
-            promptForHost();
-            clientTokenServiceEncrypter = TokenService.getNewEncrypter(host.substring(0, host.indexOf('@')));
-            String cryptedToken = getNewToken();
-            accessToken = clientTokenServiceEncrypter.decryptEncryption(cryptedToken);
+            
+            String[] details = promptForDetails();
+            requestNewToken(details[0], details[1]);
             
             eventLoop();
             channel.close();
@@ -42,16 +41,20 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         }
     }
     
-    public void promptForHost() {
-        host = JOptionPane.showInputDialog("Enter username@hostname",
+    public String[] promptForDetails() {
+        String[] details = new String[2];
+        details[0] = JOptionPane.showInputDialog("Enter username@hostname",
                         System.getProperty("user.name")
                         + "@localhost");
+        
+        details[1] = JOptionPane.showInputDialog("Enter password:");
+        
+        return details;
     }
     
-    public String getNewToken() {
-        String passwd = JOptionPane.showInputDialog("Enter password:");
-        
-        return TokenService.getNewToken(host, passwd);
+    private void requestNewToken(String user, String passwd) throws Exception {
+        Message msg = new Message(null, null, new Object[] {"GetT", user, passwd} );
+        tokenChannel.send(msg);
     }
     
     public String getToken() 
@@ -59,81 +62,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     
     private void eventLoop(){
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        
-//        //Create task
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"GET","0001"});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        try{               
-//            
-//            Message msg = new Message(null, null, new Object[]{"POST",new Task("0001" , "Do MDS Mandatory Exercise 1","18-09-2012",
-//                    "initialized","Task Manager simple setup", "Mikkel; Alex; Niklas; Morten")});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"POST",new Task("0002" , "Clean up code","26-09-2012",
-//                "initialized","Code needs to shine", "Mikkel; Alex; Niklas; Morten")});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"POST",new Task("0003", "Mess with your dog", "30-10-2012",
-//                "initialized","It is getting restless", "Mikkel; Alex; Niklas; Morten")});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        // Change a task
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"PUT",new Task("0001", "Do MDS Mandatory Exercise 1","18-09-2012",
-//                    "done","Task Manager simple setup", "Mikkel")});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        // Delete a task
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"DELETE","0003"});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        // get a list og task
-//        try{
-//            Message msg = new Message(null, null, new Object[]{"GET","0001"});
-//            channel.send(msg);
-//        } catch (Exception e){
-//            System.out.println("Error occured whilst parsing object");
-//        }
-//        
-//        try {
-//            Message msg = new Message(null, null, new Object[]{"POST", 
-//                new Task("0022", "Eat your vegetables","18-09-2012",
-//                    "done","Task Manager simple setup", "Mikkel")});
-//            channel.send(msg);
-//            
-//            msg = new Message(null, null, new Object[]{"PUT", 
-//                new Task("0022", "Eat more rice","18-09-2012",
-//                    "done","Task Manager simple setup", "Mikkel")});
-//            channel.send(msg);
-//            
-//            msg = new Message(null, null, new Object[]{"DELETE","0022"});
-//            channel.send(msg);
-//        } catch (Exception e) {
-//            System.out.println("Error occured whilst parsing object");
-//        }
-        
+
         try {
             Task handin2 = new Task("handin-02", "Submit assignment-02",
                     "21-12-2012", "not-executed",
@@ -198,6 +127,8 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             for(Task t : arg){
                 System.out.println("Task: " + t.print());
             }
+        } else if("NewT".equals(receiver[0].toString())) {
+            accessToken = (String) receiver[1];
         }
 
     }

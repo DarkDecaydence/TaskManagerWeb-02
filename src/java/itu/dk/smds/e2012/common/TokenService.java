@@ -5,8 +5,6 @@ import com.jcraft.jsch.Session;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Date;
-import java.util.HashMap;
-import javax.swing.JOptionPane;
 import org.jgroups.*;
 
 /**
@@ -15,7 +13,6 @@ import org.jgroups.*;
  */
 public class TokenService extends ReceiverAdapter {
     private static Encrypter tokenServiceServerEncrypter;
-    private static HashMap<String,Encrypter> tokenServiceClientEncrypters;
     private JChannel tokenChannel;
     
 
@@ -48,34 +45,26 @@ public class TokenService extends ReceiverAdapter {
     
     @Override
     public void receive(Message msg){
-        try{
-            //TODO the code for receiving and sending encryters
+        try {
+            String[] rec = (String[]) msg.getObject();
             
-            String rec =(String) msg.getObject();
-            
-            if("ServerToken".equals(rec)){
-                //Send encrypter
+            if("SENC".equals(rec[0])){
+                tokenServiceServerEncrypter = Encrypter.getInstance(rec[1]);
+            } else if ("GetT".equals(rec[0])) {
+                String token = getNewToken(rec[1], rec[2]);
+                Message tokenMsg = new Message(null, null, new Object[] {"NewT", token});
+                tokenChannel.send(tokenMsg);
             }
         } catch (Exception e){
             System.out.println("Error while parsing command");
             // Send message back to client using "send"
         }
     } 
-    
-    public static Encrypter getNewEncrypter(String username) {
-        Encrypter newEnc = Encrypter.getInstance();
-        tokenServiceClientEncrypters.put(username, newEnc);
-        return newEnc;
-    }
-    
-    public static Encrypter connectToServer() {
-        Encrypter newEnc = Encrypter.getInstance();
-        tokenServiceServerEncrypter = newEnc;
-        return newEnc;
-    }
 
     public static String getNewToken(String host, String passwd) {
         String token;
+        Encrypter userEnc = Encrypter.getInstance(passwd);
+        
         try {
             JSch jsch = new JSch();
             
@@ -93,7 +82,7 @@ public class TokenService extends ReceiverAdapter {
             String timestamp = date.toString();
             String unsafeToken = user + host + ", " + timestamp;
             String serverCryptedToken = tokenServiceServerEncrypter.encryptClearText(unsafeToken);
-            token = tokenServiceClientEncrypters.get(user).encryptClearText(serverCryptedToken);
+            token = userEnc.encryptClearText(serverCryptedToken);
         } catch(Exception e) {
             // System.out.println(e);
             token = null;

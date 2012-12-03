@@ -15,6 +15,8 @@ import org.jgroups.*;
 public class TaskManagerTCPServer extends ReceiverAdapter{
 
     private static Cal cal = CalSerializer.getCal();
+    private String serverPassword = 
+            "thvoid13z6c31h1i714v7bd78s181a899p6j9b70g7ihasdnfpjdsb";
     private Encrypter serverTokenServiceEncrypter;
     
     private JChannel channel;
@@ -29,23 +31,27 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
         channel = new JChannel();
         channel.setReceiver(this);                   
         channel.connect("ServerCluster");
+        
         tokenChannel = new JChannel();
         tokenChannel.setReceiver(this);
         tokenChannel.connect("TokenCluster");
-        tc=0;
-        tokenChannel.send(new Message(null,null,"ServerToken"));
-        serverTokenServiceEncrypter = TokenService.connectToServer();
+        
+        tc = 0;
+        
+        serverTokenServiceEncrypter = Encrypter.getInstance(serverPassword);
+        tokenChannel.send(new Message(null, null, new Object[] {"SENC", serverPassword}));
+        
         eventLoop();
         channel.close();
     }
         
-    private void eventLoop(){    
+    private void eventLoop(){
         BufferedReader in=new BufferedReader(new InputStreamReader(System.in));
 
         while(true) {
             try {
             System.out.print("> "); System.out.flush();
-            String line=in.readLine().toLowerCase();
+            String line = in.readLine().toLowerCase();
                 if(line.startsWith("end") || line.startsWith("close")) {
                     break;
                 }
@@ -56,7 +62,6 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
 
             } catch(Exception e) {
             }
-
         }
     }
         
