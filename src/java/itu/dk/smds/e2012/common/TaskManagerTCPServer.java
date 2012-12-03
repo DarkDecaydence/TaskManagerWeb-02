@@ -13,16 +13,13 @@ import org.jgroups.*;
  * Class handling the server
  */
 public class TaskManagerTCPServer extends ReceiverAdapter{
-    /*
-    private static Socket socket;
-    private ServerSocket serverSocket;
-    private static DataInputStream dis;
-    */
+
     private static Cal cal = CalSerializer.getCal();
     private Encrypter serverTokenServiceEncrypter;
-    private ArrayList<Encrypter> clientServerEncrypter = new ArrayList<Encrypter>();
     
-    private static JChannel channel;
+    private JChannel channel;
+    private JChannel tokenChannel;
+    private int tc;
     
     /**
      * Main method for initializing the server
@@ -31,8 +28,13 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     public void start(String[] args) throws Exception {
         channel = new JChannel();
         channel.setReceiver(this);                   
-        channel.connect("ServerCluster1");
-        serverTokenServiceEncrypter = new Encrypter();
+        channel.connect("ServerCluster");
+        tokenChannel = new JChannel();
+        tokenChannel.setReceiver(this);
+        tokenChannel.connect("TokenCluster");
+        tc=0;
+        tokenChannel.send(new Message(null,null,"ServerToken"));
+        serverTokenServiceEncrypter = TokenService.connectToServer();
         eventLoop();
         channel.close();
     }
@@ -65,6 +67,17 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     
     @Override
     public void receive(Message msg){
+        if(tc==0){
+            try{
+                //Get encrypter from token service
+                Object[] rec;
+                rec =(Object[]) msg.getObject();
+                tc++;
+            }catch (Exception e){
+                System.out.println("Error while parsing command");
+            }
+        }
+        
         try{
             try{
                 String rec = (String) msg.getObject();

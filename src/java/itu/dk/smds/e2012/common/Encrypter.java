@@ -14,13 +14,26 @@ public class Encrypter {
     private static KeyGenerator keyGen;
     private SecretKey desKey;
     private Cipher desCipher;
+    
+    public static Encrypter getInstance() {
+        return new Encrypter();
+    }
+    
+    private Encrypter() {
+        try {
+            keyGen = KeyGenerator.getInstance("DES");
+            desKey = keyGen.generateKey();
+            desCipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
 
-    public Encrypter() throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        keyGen = KeyGenerator.getInstance("DES");
-        desKey = keyGen.generateKey();
-        desCipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
-
-        desCipher.init(Cipher.ENCRYPT_MODE, desKey);
+            desCipher.init(Cipher.ENCRYPT_MODE, desKey);
+        } catch (NoSuchAlgorithmException nsae) {
+            System.out.println("No such algorithm: " + nsae.getMessage());
+        } catch (NoSuchPaddingException nspe) {
+            System.out.println("No such padding: " + nspe.getMessage());
+        } catch (InvalidKeyException ike) {
+            System.out.println("Invalid key: " + ike.getMessage());
+        }
+        
     }
 
     public String encryptClearText(String input) throws IllegalBlockSizeException, BadPaddingException {
