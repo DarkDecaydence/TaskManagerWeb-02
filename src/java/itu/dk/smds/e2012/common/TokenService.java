@@ -19,7 +19,7 @@ public class TokenService extends ReceiverAdapter {
     private HashMap<String,Encrypter> tokenServiceClientEncrypters;
     private static JChannel channel;
     
-    public TokenService() {
+    public void start() {
         try {
             channel = new JChannel();
             channel.setReceiver(this);
@@ -28,7 +28,6 @@ public class TokenService extends ReceiverAdapter {
             channel.close();
         } catch (Exception e) {
         }
-        
     }
     
     private void eventLoop()
@@ -96,6 +95,6 @@ public class TokenService extends ReceiverAdapter {
     }
     
     public static void main(String[] args) {
-        new TokenService();
+        new TokenService().start();
     }
 }

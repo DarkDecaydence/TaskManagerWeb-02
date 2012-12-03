@@ -27,7 +27,7 @@ public class Encrypter {
         byte[] clearText = input.getBytes();
         byte[] cipherBytes = desCipher.doFinal(clearText);
         String cipherText = Base64.encode(cipherBytes);
-
+        
         return cipherText;
     }
 
