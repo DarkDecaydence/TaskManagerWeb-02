@@ -13,6 +13,7 @@ import org.jgroups.stack.IpAddress;
 public class TaskManagerTCPClient extends ReceiverAdapter {
 
     private JChannel channel;
+    private JChannel tokenChannel;
     private Encrypter clientTokenServiceEncrypter;
     private String accessToken;
     private String host;
@@ -25,8 +26,10 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
         try {
             channel = new JChannel();
             channel.setReceiver(this);
-            channel.connect("ServerCluster1");
-            
+            channel.connect("ServerCluster");
+            tokenChannel = new JChannel();
+            tokenChannel.setReceiver(this);
+            tokenChannel.connect("TokenCluster");
             promptForHost();
             clientTokenServiceEncrypter = TokenService.getNewEncrypter(host.substring(0, host.indexOf('@')));
             String cryptedToken = getNewToken();
