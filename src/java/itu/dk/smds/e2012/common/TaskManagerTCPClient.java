@@ -2,6 +2,7 @@ package itu.dk.smds.e2012.common;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.jgroups.*;
@@ -27,10 +28,6 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
             channel.setReceiver(this);
             channel.connect("ServerCluster");
             
-            tokenChannel = new JChannel();
-            tokenChannel.setReceiver(this);
-            tokenChannel.connect("TokenCluster");
-            
             String[] details = promptForDetails();
             requestNewToken(details[0], details[1]);
             
@@ -54,7 +51,7 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     
     private void requestNewToken(String user, String passwd) throws Exception {
         Message msg = new Message(null, null, new Object[] {"GetT", user, passwd} );
-        tokenChannel.send(msg);
+        channel.send(msg);
     }
     
     public String getToken() 
@@ -63,30 +60,58 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
     private void eventLoop(){
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-        try {
-            Task handin2 = new Task("handin-02", "Submit assignment-02",
-                    "21-12-2012", "not-executed",
-                    "Work on mandatory assignment and send hand-in to TA-01",
-                    "Mikkel, Alexander, Niklas, Morten", false);
-            
-            Task review2 = new Task("review-02", "Review and check assignment-02",
-                    "23-12-2012", "not-executed",
-                    "Check the assignment sent by students and approve/reject.",
-                    "TA-01, Rao", false);
-            
-            handin2.addResponse(review2.id);
-            review2.addCondition(handin2.id);
-            
-            Message msg = new Message(null, null, new Object[] {"POST", handin2});
-            Message msg2 = new Message(null, null, new Object[] {"POST", review2});
-            
-            channel.send(msg);
-            channel.send(msg2);
-        } catch (Exception e) {
-        }
+//        try {
+//            Task handin2 = new Task("handin-02", "Submit assignment-02",
+//                    "21-12-2012", "not-executed",
+//                    "Work on mandatory assignment and send hand-in to TA-01",
+//                    "Mikkel, Alexander, Niklas, Morten", false);
+//            
+//            Task review2 = new Task("review-02", "Review and check assignment-02",
+//                    "23-12-2012", "not-executed",
+//                    "Check the assignment sent by students and approve/reject.",
+//                    "TA-01, Rao", false);
+//            
+//            handin2.addResponse(review2.id);
+//            review2.addCondition(handin2.id);
+//            
+//            Message msg = new Message(null, null, new Object[] {"POST", handin2, accessToken});
+//            Message msg2 = new Message(null, null, new Object[] {"POST", review2,accessToken});
+//            
+//            channel.send(msg);
+//            channel.send(msg2);
+//        } catch (Exception e) {
+//        }
         
         
         while(true) {
+            int count = 0;
+            while(count<1){
+                if(accessToken != null){
+                try {
+                    Task handin2 = new Task("handin-02", "Submit assignment-02",
+                            "21-12-2012", "not-executed",
+                            "Work on mandatory assignment and send hand-in to TA-01",
+                            "Mikkel, Alexander, Niklas, Morten", false);
+
+                    Task review2 = new Task("review-02", "Review and check assignment-02",
+                            "23-12-2012", "not-executed",
+                            "Check the assignment sent by students and approve/reject.",
+                            "TA-01, Rao", false);
+
+                    handin2.addResponse(review2.id);
+                    review2.addCondition(handin2.id);
+
+                    Message msg = new Message(null, null, new Object[] {"POST", handin2, accessToken});
+                    Message msg2 = new Message(null, null, new Object[] {"POST", review2,accessToken});
+
+                    channel.send(msg);
+                    channel.send(msg2);
+                } catch (Exception e) {
+                    System.out.println(e);
+                }
+                count++;
+                }
+            }
             try {
                 System.out.print("> "); System.out.flush();
 
@@ -95,19 +120,6 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
                 if(line.startsWith("end") || line.startsWith("close")) {
                     break;
                 }
-
-                int count = 0;
-                Message msg;
-                //line="[" + "Client" + "] " + line;
-                if(count < 1){
-                    msg = new Message(null,null,new String[]{"Hej","ObjectJob"});
-                    count++;
-                } else {
-                    msg=new Message(null, null, line);
-                }
-                
-                channel.send(msg);
-
             } catch(Exception e) {
             }            
         }
@@ -128,7 +140,16 @@ public class TaskManagerTCPClient extends ReceiverAdapter {
                 System.out.println("Task: " + t.print());
             }
         } else if("NewT".equals(receiver[0].toString())) {
+            System.out.println("The token have arrived");
             accessToken = (String) receiver[1];
+            Date date = new Date();
+            String timestamp = date.toString();
+            String user = "msto";
+            String host = "itu.dk";
+            accessToken = user + "@"+ host + ", " + timestamp;
+            if(accessToken == null){
+                System.out.println("Bite me");
+            }
         }
 
     }

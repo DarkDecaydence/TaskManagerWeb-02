@@ -19,7 +19,7 @@ public class TokenService extends ReceiverAdapter {
     private void start() throws Exception{
         tokenChannel = new JChannel();
         tokenChannel.setReceiver(this);                   
-        tokenChannel.connect("TokenCluster");
+        tokenChannel.connect("ServerCluster");
         eventLoop();
         tokenChannel.close();
     }
@@ -46,22 +46,26 @@ public class TokenService extends ReceiverAdapter {
     @Override
     public void receive(Message msg){
         try {
-            String[] rec = (String[]) msg.getObject();
             
-            if("SENC".equals(rec[0])){
-                tokenServiceServerEncrypter = Encrypter.getInstance(rec[1]);
-            } else if ("GetT".equals(rec[0])) {
-                String token = getNewToken(rec[1], rec[2]);
+            Object[] rec = (Object[]) msg.getObject();
+            if(!("SENC".equals((String) rec[0]) || "GetT".equals((String) rec[0]))){
+                return;
+            }
+            if("SENC".equals((String) rec[0])){
+                tokenServiceServerEncrypter = Encrypter.getInstance((String)rec[1]);
+                System.out.println("Server Password Arrived");
+            } else if ("GetT".equals((String) rec[0])) {
+                String token = getNewToken((String)rec[1],(String) rec[2]);
                 Message tokenMsg = new Message(null, null, new Object[] {"NewT", token});
                 tokenChannel.send(tokenMsg);
             }
         } catch (Exception e){
-            System.out.println("Error while parsing command");
+            System.out.println("Error while parsing command, TokenService");
             // Send message back to client using "send"
         }
     } 
 
-    public static String getNewToken(String host, String passwd) {
+    private static String getNewToken(String host, String passwd) {
         String token;
         Encrypter userEnc = Encrypter.getInstance(passwd);
         
@@ -80,11 +84,11 @@ public class TokenService extends ReceiverAdapter {
             
             Date date = new Date();
             String timestamp = date.toString();
-            String unsafeToken = user + host + ", " + timestamp;
+            String unsafeToken = user + "@"+ host + ", " + timestamp;
             String serverCryptedToken = tokenServiceServerEncrypter.encryptClearText(unsafeToken);
             token = userEnc.encryptClearText(serverCryptedToken);
         } catch(Exception e) {
-            // System.out.println(e);
+            System.out.println(e);
             token = null;
         }
         

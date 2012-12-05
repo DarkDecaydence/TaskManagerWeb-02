@@ -3,7 +3,9 @@ package itu.dk.smds.e2012.common;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +23,8 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     
     private JChannel channel;
     private JChannel tokenChannel;
-    private int tc;
+    private Address tokAdd;
+    private Address serAdd;
     
     /**
      * Main method for initializing the server
@@ -31,17 +34,20 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
         channel = new JChannel();
         channel.setReceiver(this);                   
         channel.connect("ServerCluster");
-        
+        serAdd = channel.getAddress();
+        serverTokenServiceEncrypter = Encrypter.getInstance(serverPassword);
+        channel.send(new Message(null, null, new Object[] {"SENC", serverPassword}));
+        /*
         tokenChannel = new JChannel();
         tokenChannel.setReceiver(this);
         tokenChannel.connect("TokenCluster");
+        tokAdd = tokenChannel.getAddress();
+        */
         
-        tc = 0;
         
-        serverTokenServiceEncrypter = Encrypter.getInstance(serverPassword);
-        tokenChannel.send(new Message(null, null, new Object[] {"SENC", serverPassword}));
-        
+        //channel.send(new Message(null, null, new Object[] {"SENC", serverPassword}));
         eventLoop();
+        //tokenChannel.close();
         channel.close();
     }
         
@@ -55,11 +61,9 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
                 if(line.startsWith("end") || line.startsWith("close")) {
                     break;
                 }
-
-            Message msg=new Message(null, null, line);
-
-            channel.send(msg);
-
+                if(line.startsWith("deleteall")) {
+                    deleteAll();
+                }
             } catch(Exception e) {
             }
         }
@@ -72,33 +76,38 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
     
     @Override
     public void receive(Message msg){
-        if(tc==0){
-            try{
-                //Get encrypter from token service
-                Object[] rec;
-                rec =(Object[]) msg.getObject();
-                tc++;
-            }catch (Exception e){
-                System.out.println("Error while parsing command");
-            }
-        }
-        
         try{
             try{
                 String rec = (String) msg.getObject();
                 System.out.println("REC "+ rec);
                 if("deleteall".equals(rec)){
-                    deleteAll(msg);
+                    deleteAll();
                 }
             } catch(Exception e) {
                 //Do nothing, internal command for reseting task list
             }
-            Operation operation = new Operation(msg);
-            Thread operationThread = new Thread(operation);
-            operationThread.start();
+            
+            Object[] rec  = (Object[]) msg.getObject();
+            if(rec[0].equals("SENC") || rec[0].equals("GetT") || rec[0].equals("NewT")){
+                return;
+            }
+            System.out.println("The Client message: " + (String) rec[2]);
+            String en = serverTokenServiceEncrypter.decryptEncryption((String) rec[2]);
+            System.out.println("The Client has sent a With a password that works");
+            String[] recIn = en.split(",");
+            DateFormat df = DateFormat.getDateInstance();
+            Date serverTime = new Date(new Date().getTime()+600000);
+            Date time;
+            time = df.parse(recIn[1]);
+            if(time.after(serverTime)){
+                Operation operation = new Operation(msg);
+                Thread operationThread = new Thread(operation);
+                operationThread.start();
+            }
+            
         } catch (Exception e){
-            System.out.println("Error while parsing command");
-            // Send message back to client using "send"
+            System.out.println("Error while parsing command " +e);
+                    
         }
     }    
     
@@ -111,8 +120,10 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
             this.msg = msg;
             
             try{
+                
                 Object[] receiver = (Object[]) msg.getObject();
                 type = receiver[0].toString();
+                
             } catch (Exception e){
                 type="NULL";
             }
@@ -181,9 +192,9 @@ public class TaskManagerTCPServer extends ReceiverAdapter{
         }
     }
     
-    private void deleteAll(Message msg){
+    private void deleteAll(){
             try{
-                System.out.println(msg.getScope());
+                //System.out.println(msg.getScope());
                 cal.deleteAllTask();
             } catch (ClassCastException e){
                 System.out.println("Couldn't delete task");
